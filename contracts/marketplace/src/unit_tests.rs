@@ -11,8 +11,8 @@ use crate::state::{ask_key, asks, bid_key, bids, Ask, Bid, SaleType};
 use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
 use cosmwasm_std::{coin, coins, Addr, DepsMut, Timestamp, Uint128};
 use cw_utils::Duration;
-use sg_std::NATIVE_DENOM;
 
+pub const NATIVE_DENOM: &str = "uheart";
 const CREATOR: &str = "creator";
 const COLLECTION: &str = "collection";
 const TOKEN_ID: u32 = 123;

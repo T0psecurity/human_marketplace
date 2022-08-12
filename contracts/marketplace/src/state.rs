@@ -3,7 +3,7 @@ use cw_storage_plus::{Index, IndexList, IndexedMap, Item, MultiIndex};
 use cw_utils::Duration;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use sg_controllers::Hooks;
+use cw_controllers::Hooks;
 
 use crate::helpers::ExpiryRange;
 

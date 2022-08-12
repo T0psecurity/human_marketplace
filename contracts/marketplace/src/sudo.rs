@@ -2,9 +2,8 @@ use crate::error::ContractError;
 use crate::helpers::ExpiryRange;
 use crate::msg::SudoMsg;
 use crate::state::{ASK_HOOKS, BID_HOOKS, SALE_HOOKS, SUDO_PARAMS};
-use cosmwasm_std::{entry_point, Addr, Decimal, DepsMut, Env, Uint128};
+use cosmwasm_std::{entry_point, Addr, Decimal, DepsMut, Env, Uint128, Response};
 use cw_utils::Duration;
-use sg_std::Response;
 
 // bps fee can not exceed 100%
 const MAX_FEE_BPS: u64 = 10000;

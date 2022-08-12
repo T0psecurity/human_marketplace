@@ -28,9 +28,9 @@ Once you are happy with the content, you can compile it to wasm via:
 
 ```
 RUSTFLAGS='-C link-arg=-s' cargo wasm
-cp ../../target/wasm32-unknown-unknown/release/sg_marketplace.wasm .
-ls -l sg_marketplace.wasm
-sha256sum sg_marketplace.wasm
+cp ../../target/wasm32-unknown-unknown/release/human_marketplace.wasm .
+ls -l human_marketplace.wasm
+sha256sum human_marketplace.wasm
 ```
 
 Or for a production-ready (optimized) build, run the build command in the repository root: https://github.com/CosmWasm/cosmwasm-plus#compiling.

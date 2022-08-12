@@ -1,6 +1,6 @@
 use cosmwasm_std::{StdError, Uint128};
 use cw_utils::PaymentError;
-use sg_controllers::HookError;
+use cw_controllers::HookError;
 use thiserror::Error;
 
 use crate::helpers::ExpiryRangeError;

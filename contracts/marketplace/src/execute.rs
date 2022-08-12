@@ -7,28 +7,32 @@ use crate::msg::{
 use crate::state::{
     ask_key, asks, bid_key, bids, collection_bid_key, collection_bids, Ask, Bid, CollectionBid,
     Order, SaleType, SudoParams, TokenId, ASK_HOOKS, BID_HOOKS, COLLECTION_BID_HOOKS, SALE_HOOKS,
-    SUDO_PARAMS,
+    SUDO_PARAMS
 };
+use cw721_base::Metadata;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     coin, to_binary, Addr, BankMsg, Coin, Decimal, Deps, DepsMut, Empty, Env, Event, MessageInfo,
-    Reply, StdError, StdResult, Storage, Timestamp, Uint128, WasmMsg,
+    Reply, StdError, StdResult, Storage, Timestamp, Uint128, WasmMsg, Response, SubMsg
 };
 use cw2::set_contract_version;
-use cw721::{Cw721ExecuteMsg, OwnerOfResponse};
+use cw721_base::ExecuteMsg as Cw721ExecuteMsg;
+use cw721_base::QueryMsg as Cw721QueryMsg;
+use cw721_base::CollectionInfoResponse;
+use cw721::OwnerOfResponse;
 use cw721_base::helpers::Cw721Contract;
 use cw_storage_plus::Item;
 use cw_utils::{may_pay, maybe_addr, must_pay, nonpayable, Duration, Expiration};
 use schemars::JsonSchema;
 use semver::Version;
 use serde::{Deserialize, Serialize};
-use sg1::fair_burn;
-use sg721::msg::{CollectionInfoResponse, QueryMsg as Sg721QueryMsg};
-use sg_std::{Response, SubMsg, NATIVE_DENOM};
+// use sg1::fair_burn;
+
+pub const NATIVE_DENOM: &str = "uheart";
 
 // Version info for migration info
-const CONTRACT_NAME: &str = "crates.io:sg-marketplace";
+const CONTRACT_NAME: &str = "crates.io:human-marketplace";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // bps fee can not exceed 100%
@@ -324,9 +328,9 @@ pub fn execute_set_ask(
 
     // Append fair_burn msg
     let mut res = Response::new();
-    if listing_fee > Uint128::zero() {
-        fair_burn(listing_fee.u128(), None, &mut res);
-    }
+    // if listing_fee > Uint128::zero() {
+    //     fair_burn(listing_fee.u128(), None, &mut res);
+    // }
 
     let hook = prepare_ask_hook(deps.as_ref(), &ask, HookAction::Create)?;
 
@@ -996,7 +1000,7 @@ fn finalize_sale(
         res,
     )?;
 
-    let cw721_transfer_msg = Cw721ExecuteMsg::TransferNft {
+    let cw721_transfer_msg = Cw721ExecuteMsg::<Metadata>::TransferNft {
         token_id: ask.token_id.to_string(),
         recipient: buyer.to_string(),
     };
@@ -1036,11 +1040,11 @@ fn payout(
 
     // Append Fair Burn message
     let network_fee = payment * params.trading_fee_percent / Uint128::from(100u128);
-    fair_burn(network_fee.u128(), None, res);
+    // fair_burn(network_fee.u128(), None, res);
 
     let collection_info: CollectionInfoResponse = deps
         .querier
-        .query_wasm_smart(collection.clone(), &Sg721QueryMsg::CollectionInfo {})?;
+        .query_wasm_smart(collection.clone(), &Cw721QueryMsg::CollectionInfo {})?;
 
     let finders_fee = match finder {
         Some(finder) => {
@@ -1061,25 +1065,25 @@ fn payout(
     match collection_info.royalty_info {
         // If token supports royalities, payout shares to royalty recipient
         Some(royalty) => {
-            let amount = coin((payment * royalty.share).u128(), NATIVE_DENOM);
+            let amount = coin((payment * royalty.royalty_rate).u128(), NATIVE_DENOM);
             if payment < (network_fee + Uint128::from(finders_fee) + amount.amount) {
                 return Err(StdError::generic_err("Fees exceed payment"));
             }
             res.messages.push(SubMsg::new(BankMsg::Send {
-                to_address: royalty.payment_address.to_string(),
+                to_address: royalty.address.to_string(),
                 amount: vec![amount.clone()],
             }));
 
             let event = Event::new("royalty-payout")
                 .add_attribute("collection", collection.to_string())
                 .add_attribute("amount", amount.to_string())
-                .add_attribute("recipient", royalty.payment_address.to_string());
+                .add_attribute("recipient", royalty.address.to_string());
             res.events.push(event);
 
             let seller_share_msg = BankMsg::Send {
                 to_address: payment_recipient.to_string(),
                 amount: vec![coin(
-                    (payment * (Decimal::one() - royalty.share) - network_fee).u128() - finders_fee,
+                    (payment * (Decimal::one() - royalty.royalty_rate) - network_fee).u128() - finders_fee,
                     NATIVE_DENOM.to_string(),
                 )],
             };

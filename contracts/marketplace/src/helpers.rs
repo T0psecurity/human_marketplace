@@ -1,8 +1,7 @@
 use crate::msg::ExecuteMsg;
-use cosmwasm_std::{to_binary, Addr, Api, BlockInfo, StdError, StdResult, Timestamp, WasmMsg};
+use cosmwasm_std::{to_binary, Addr, Api, BlockInfo, StdError, StdResult, Timestamp, WasmMsg, CosmosMsg};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use sg_std::CosmosMsg;
 use thiserror::Error;
 
 /// MarketplaceContract is a wrapper around Addr that provides a lot of helpers

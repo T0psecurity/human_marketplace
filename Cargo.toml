@@ -1,7 +1,7 @@
 [workspace]
 members = ["contracts/*"]
 
-[profile.release.package.sg-marketplace]
+[profile.release.package.human-marketplace]
 codegen-units = 1
 incremental = false
 
