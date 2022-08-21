@@ -13,7 +13,7 @@ pub struct ParamInfo {
     ask_expiry: Option<ExpiryRange>,
     bid_expiry: Option<ExpiryRange>,
     operators: Option<Vec<String>>,
-    max_finders_fee_bps: Option<u64>,
+    // max_finders_fee_bps: Option<u64>,
     min_price: Option<Uint128>,
     stale_bid_duration: Option<u64>,
     bid_removal_reward_bps: Option<u64>,
@@ -30,7 +30,7 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractE
             ask_expiry,
             bid_expiry,
             operators,
-            max_finders_fee_bps,
+            // max_finders_fee_bps,
             min_price,
             stale_bid_duration,
             bid_removal_reward_bps,
@@ -43,7 +43,7 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractE
                 ask_expiry,
                 bid_expiry,
                 operators,
-                max_finders_fee_bps,
+                // max_finders_fee_bps,
                 min_price,
                 stale_bid_duration,
                 bid_removal_reward_bps,
@@ -74,17 +74,17 @@ pub fn sudo_update_params(
         ask_expiry,
         bid_expiry,
         operators: _operators,
-        max_finders_fee_bps,
+        // max_finders_fee_bps,
         min_price,
         stale_bid_duration,
         bid_removal_reward_bps,
         listing_fee,
     } = param_info;
-    if let Some(max_finders_fee_bps) = max_finders_fee_bps {
-        if max_finders_fee_bps > MAX_FEE_BPS {
-            return Err(ContractError::InvalidFindersFeeBps(max_finders_fee_bps));
-        }
-    }
+    // if let Some(max_finders_fee_bps) = max_finders_fee_bps {
+    //     if max_finders_fee_bps > MAX_FEE_BPS {
+    //         return Err(ContractError::InvalidFindersFeeBps(max_finders_fee_bps));
+    //     }
+    // }
     if let Some(trading_fee_bps) = trading_fee_bps {
         if trading_fee_bps > MAX_FEE_BPS {
             return Err(ContractError::InvalidTradingFeeBps(trading_fee_bps));
@@ -110,9 +110,9 @@ pub fn sudo_update_params(
     params.ask_expiry = ask_expiry.unwrap_or(params.ask_expiry);
     params.bid_expiry = bid_expiry.unwrap_or(params.bid_expiry);
 
-    params.max_finders_fee_percent = max_finders_fee_bps
-        .map(Decimal::percent)
-        .unwrap_or(params.max_finders_fee_percent);
+    // params.max_finders_fee_percent = max_finders_fee_bps
+    //     .map(Decimal::percent)
+    //     .unwrap_or(params.max_finders_fee_percent);
 
     params.min_price = min_price.unwrap_or(params.min_price);
 

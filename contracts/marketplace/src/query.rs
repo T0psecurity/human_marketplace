@@ -308,7 +308,7 @@ pub fn query_asks_sorted_by_price(
     let limit = limit.unwrap_or(DEFAULT_QUERY_LIMIT).min(MAX_QUERY_LIMIT) as usize;
 
     let start = start_after.map(|offset| {
-        Bound::exclusive((offset.price.u128(), ask_key(&collection, offset.token_id)))
+        Bound::exclusive((offset.price.u128(), ask_key(&collection, &offset.token_id)))
     });
 
     let asks = asks()
@@ -340,7 +340,7 @@ pub fn reverse_query_asks_sorted_by_price(
     let limit = limit.unwrap_or(DEFAULT_QUERY_LIMIT).min(MAX_QUERY_LIMIT) as usize;
 
     let end = start_before.map(|offset| {
-        Bound::exclusive((offset.price.u128(), ask_key(&collection, offset.token_id)))
+        Bound::exclusive((offset.price.u128(), ask_key(&collection, &offset.token_id)))
     });
 
     let asks = asks()
@@ -384,7 +384,7 @@ pub fn query_asks_by_seller(
 
     let start = if let Some(start) = start_after {
         let collection = deps.api.addr_validate(&start.collection)?;
-        Some(Bound::exclusive(ask_key(&collection, start.token_id)))
+        Some(Bound::exclusive(ask_key(&collection, &start.token_id)))
     } else {
         None
     };
@@ -409,7 +409,7 @@ pub fn query_asks_by_seller(
 }
 
 pub fn query_ask(deps: Deps, collection: Addr, token_id: TokenId) -> StdResult<AskResponse> {
-    let ask = asks().may_load(deps.storage, ask_key(&collection, token_id))?;
+    let ask = asks().may_load(deps.storage, ask_key(&collection, &token_id))?;
 
     Ok(AskResponse { ask })
 }
@@ -437,7 +437,7 @@ pub fn query_bids_by_bidder(
         let collection = deps.api.addr_validate(&start.collection)?;
         Some(Bound::exclusive(bid_key(
             &collection,
-            start.token_id,
+            &start.token_id,
             &bidder,
         )))
     } else {
@@ -489,7 +489,7 @@ pub fn query_bids_sorted_by_price(
     let start: Option<Bound<(u128, BidKey)>> = start_after.map(|offset| {
         Bound::exclusive((
             offset.price.u128(),
-            bid_key(&collection, offset.token_id, &offset.bidder),
+            bid_key(&collection, &offset.token_id, &offset.bidder),
         ))
     });
 
@@ -516,7 +516,7 @@ pub fn reverse_query_bids_sorted_by_price(
     let end: Option<Bound<(u128, BidKey)>> = start_before.map(|offset| {
         Bound::exclusive((
             offset.price.u128(),
-            bid_key(&collection, offset.token_id, &offset.bidder),
+            bid_key(&collection, &offset.token_id, &offset.bidder),
         ))
     });
 
@@ -547,7 +547,7 @@ pub fn query_bids_by_bidder_sorted_by_expiry(
             match bid.bid {
                 Some(bid) => Some(Bound::exclusive((
                     bid.expires_at.seconds(),
-                    bid_key(&collection, offset.token_id, &bidder),
+                    bid_key(&collection, &offset.token_id, &bidder),
                 ))),
                 None => None,
             }

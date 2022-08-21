@@ -24,7 +24,7 @@ pub struct InstantiateMsg {
     /// The address of the airdrop claim contract to detect sales
     pub sale_hook: Option<String>,
     /// Max basis points for the finders fee
-    pub max_finders_fee_bps: u64,
+    // pub max_finders_fee_bps: u64,
     /// Min value for bids and asks
     pub min_price: Uint128,
     /// Duration after expiry when a bid becomes stale (in seconds)
@@ -45,8 +45,8 @@ pub enum ExecuteMsg {
         token_id: TokenId,
         price: Coin,
         funds_recipient: Option<String>,
-        reserve_for: Option<String>,
-        finders_fee_bps: Option<u64>,
+        // reserve_for: Option<String>,
+        // finders_fee_bps: Option<u64>,
         expires: Timestamp,
     },
     /// Remove an existing ask from the marketplace
@@ -66,8 +66,8 @@ pub enum ExecuteMsg {
         token_id: TokenId,
         expires: Timestamp,
         sale_type: SaleType,
-        finder: Option<String>,
-        finders_fee_bps: Option<u64>,
+        // finder: Option<String>,
+        // finders_fee_bps: Option<u64>,
     },
     /// Remove an existing bid from an ask
     RemoveBid {
@@ -79,13 +79,13 @@ pub enum ExecuteMsg {
         collection: String,
         token_id: TokenId,
         bidder: String,
-        finder: Option<String>,
+        // finder: Option<String>,
     },
     /// Place a bid (limit order) across an entire collection
     SetCollectionBid {
         collection: String,
         expires: Timestamp,
-        finders_fee_bps: Option<u64>,
+        // finders_fee_bps: Option<u64>,
     },
     /// Remove a bid (limit order) across an entire collection
     RemoveCollectionBid { collection: String },
@@ -94,7 +94,7 @@ pub enum ExecuteMsg {
         collection: String,
         token_id: TokenId,
         bidder: String,
-        finder: Option<String>,
+        // finder: Option<String>,
     },
     /// Privileged operation to change the active state of an ask when an NFT is transferred
     SyncAsk {
@@ -126,7 +126,7 @@ pub enum SudoMsg {
         ask_expiry: Option<ExpiryRange>,
         bid_expiry: Option<ExpiryRange>,
         operators: Option<Vec<String>>,
-        max_finders_fee_bps: Option<u64>,
+        // max_finders_fee_bps: Option<u64>,
         min_price: Option<Uint128>,
         stale_bid_duration: Option<u64>,
         bid_removal_reward_bps: Option<u64>,
@@ -416,7 +416,7 @@ pub struct CollectionBidsResponse {
 #[serde(rename_all = "snake_case")]
 pub struct SaleHookMsg {
     pub collection: String,
-    pub token_id: u32,
+    pub token_id: String,
     pub price: Coin,
     pub seller: String,
     pub buyer: String,
@@ -425,7 +425,7 @@ pub struct SaleHookMsg {
 impl SaleHookMsg {
     pub fn new(
         collection: String,
-        token_id: u32,
+        token_id: String,
         price: Coin,
         seller: String,
         buyer: String,

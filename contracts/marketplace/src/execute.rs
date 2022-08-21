@@ -46,9 +46,9 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-    if msg.max_finders_fee_bps > MAX_FEE_BPS {
-        return Err(ContractError::InvalidFindersFeeBps(msg.max_finders_fee_bps));
-    }
+    // if msg.max_finders_fee_bps > MAX_FEE_BPS {
+    //     return Err(ContractError::InvalidFindersFeeBps(msg.max_finders_fee_bps));
+    // }
     if msg.trading_fee_bps > MAX_FEE_BPS {
         return Err(ContractError::InvalidTradingFeeBps(msg.trading_fee_bps));
     }
@@ -71,7 +71,7 @@ pub fn instantiate(
         ask_expiry: msg.ask_expiry,
         bid_expiry: msg.bid_expiry,
         operators: map_validate(deps.api, &msg.operators)?,
-        max_finders_fee_percent: Decimal::percent(msg.max_finders_fee_bps),
+        // max_finders_fee_percent: Decimal::percent(msg.max_finders_fee_bps),
         min_price: msg.min_price,
         stale_bid_duration: msg.stale_bid_duration,
         bid_removal_reward_percent: Decimal::percent(msg.bid_removal_reward_bps),
@@ -92,8 +92,8 @@ pub struct AskInfo {
     token_id: TokenId,
     price: Coin,
     funds_recipient: Option<Addr>,
-    reserve_for: Option<Addr>,
-    finders_fee_bps: Option<u64>,
+    // reserve_for: Option<Addr>,
+    // finders_fee_bps: Option<u64>,
     expires: Timestamp,
 }
 
@@ -101,8 +101,8 @@ pub struct BidInfo {
     collection: Addr,
     token_id: TokenId,
     expires: Timestamp,
-    finder: Option<Addr>,
-    finders_fee_bps: Option<u64>,
+    // finder: Option<Addr>,
+    // finders_fee_bps: Option<u64>,
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -121,8 +121,8 @@ pub fn execute(
             token_id,
             price,
             funds_recipient,
-            reserve_for,
-            finders_fee_bps,
+            // reserve_for,
+            // finders_fee_bps,
             expires,
         } => execute_set_ask(
             deps,
@@ -134,8 +134,8 @@ pub fn execute(
                 token_id,
                 price,
                 funds_recipient: maybe_addr(api, funds_recipient)?,
-                reserve_for: maybe_addr(api, reserve_for)?,
-                finders_fee_bps,
+                // reserve_for: maybe_addr(api, reserve_for)?,
+                // finders_fee_bps,
                 expires,
             },
         ),
@@ -147,8 +147,8 @@ pub fn execute(
             collection,
             token_id,
             expires,
-            finder,
-            finders_fee_bps,
+            // finder,
+            // finders_fee_bps,
             sale_type,
         } => execute_set_bid(
             deps,
@@ -159,8 +159,8 @@ pub fn execute(
                 collection: api.addr_validate(&collection)?,
                 token_id,
                 expires,
-                finder: maybe_addr(api, finder)?,
-                finders_fee_bps,
+                // finder: maybe_addr(api, finder)?,
+                // finders_fee_bps,
             },
         ),
         ExecuteMsg::RemoveBid {
@@ -171,7 +171,7 @@ pub fn execute(
             collection,
             token_id,
             bidder,
-            finder,
+            // finder,
         } => execute_accept_bid(
             deps,
             env,
@@ -179,7 +179,7 @@ pub fn execute(
             api.addr_validate(&collection)?,
             token_id,
             api.addr_validate(&bidder)?,
-            maybe_addr(api, finder)?,
+            // maybe_addr(api, finder)?,
         ),
         ExecuteMsg::UpdateAskPrice {
             collection,
@@ -196,13 +196,13 @@ pub fn execute(
         ExecuteMsg::SetCollectionBid {
             collection,
             expires,
-            finders_fee_bps,
+            // finders_fee_bps,
         } => execute_set_collection_bid(
             deps,
             env,
             info,
             api.addr_validate(&collection)?,
-            finders_fee_bps,
+            // finders_fee_bps,
             expires,
         ),
         ExecuteMsg::RemoveCollectionBid { collection } => {
@@ -212,7 +212,7 @@ pub fn execute(
             collection,
             token_id,
             bidder,
-            finder,
+            // finder,
         } => execute_accept_collection_bid(
             deps,
             env,
@@ -220,7 +220,7 @@ pub fn execute(
             api.addr_validate(&collection)?,
             token_id,
             api.addr_validate(&bidder)?,
-            maybe_addr(api, finder)?,
+            // maybe_addr(api, finder)?,
         ),
         ExecuteMsg::SyncAsk {
             collection,
@@ -267,16 +267,16 @@ pub fn execute_set_ask(
         token_id,
         price,
         funds_recipient,
-        reserve_for,
-        finders_fee_bps,
+        // reserve_for,
+        // finders_fee_bps,
         expires,
     } = ask_info;
 
     price_validate(deps.storage, &price)?;
-    only_owner(deps.as_ref(), &info, &collection, token_id)?;
+    only_owner(deps.as_ref(), &info, &collection, token_id.clone())?;
 
     // Check if this contract is approved to transfer the token
-    Cw721Contract(collection.clone()).approval(
+    Cw721Contract(collection.clone()).approval::<String>(
         &deps.querier,
         token_id.to_string(),
         env.contract.address.to_string(),
@@ -292,35 +292,35 @@ pub fn execute_set_ask(
         return Err(ContractError::InvalidListingFee(listing_fee));
     }
 
-    if let Some(fee) = finders_fee_bps {
-        if Decimal::percent(fee) > params.max_finders_fee_percent {
-            return Err(ContractError::InvalidFindersFeeBps(fee));
-        };
-    }
+    // if let Some(fee) = finders_fee_bps {
+    //     if Decimal::percent(fee) > params.max_finders_fee_percent {
+    //         return Err(ContractError::InvalidFindersFeeBps(fee));
+    //     };
+    // }
 
-    if let Some(address) = reserve_for.clone() {
-        if address == info.sender {
-            return Err(ContractError::InvalidReserveAddress {
-                reason: "cannot reserve to the same address".to_string(),
-            });
-        }
-        if sale_type != SaleType::FixedPrice {
-            return Err(ContractError::InvalidReserveAddress {
-                reason: "can only reserve for fixed_price sales".to_string(),
-            });
-        }
-    }
+    // if let Some(address) = reserve_for.clone() {
+    //     if address == info.sender {
+    //         return Err(ContractError::InvalidReserveAddress {
+    //             reason: "cannot reserve to the same address".to_string(),
+    //         });
+    //     }
+    //     if sale_type != SaleType::FixedPrice {
+    //         return Err(ContractError::InvalidReserveAddress {
+    //             reason: "can only reserve for fixed_price sales".to_string(),
+    //         });
+    //     }
+    // }
 
     let seller = info.sender;
     let ask = Ask {
         sale_type,
         collection: collection.clone(),
-        token_id,
+        token_id: token_id.clone(),
         seller: seller.clone(),
         price: price.amount,
         funds_recipient,
-        reserve_for,
-        finders_fee_bps,
+        // reserve_for,
+        // finders_fee_bps,
         expires_at: expires,
         is_active: true,
     };
@@ -352,9 +352,9 @@ pub fn execute_remove_ask(
     token_id: TokenId,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
-    only_owner(deps.as_ref(), &info, &collection, token_id)?;
+    only_owner(deps.as_ref(), &info, &collection, token_id.clone())?;
 
-    let key = ask_key(&collection, token_id);
+    let key = ask_key(&collection, &token_id);
     let ask = asks().load(deps.storage, key.clone())?;
     asks().remove(deps.storage, key)?;
 
@@ -377,10 +377,10 @@ pub fn execute_update_ask_price(
     price: Coin,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
-    only_owner(deps.as_ref(), &info, &collection, token_id)?;
+    only_owner(deps.as_ref(), &info, &collection, token_id.clone())?;
     price_validate(deps.storage, &price)?;
 
-    let key = ask_key(&collection, token_id);
+    let key = ask_key(&collection, &token_id);
 
     let mut ask = asks().load(deps.storage, key.clone())?;
     if !ask.is_active {
@@ -414,41 +414,41 @@ pub fn execute_set_bid(
     let BidInfo {
         collection,
         token_id,
-        finders_fee_bps,
+        // finders_fee_bps,
         expires,
-        finder,
+        // finder,
     } = bid_info;
     let params = SUDO_PARAMS.load(deps.storage)?;
 
-    if let Some(finder) = finder.clone() {
-        if info.sender == finder {
-            return Err(ContractError::InvalidFinder(
-                "bidder cannot be finder".to_string(),
-            ));
-        }
-    }
+    // if let Some(finder) = finder.clone() {
+    //     if info.sender == finder {
+    //         return Err(ContractError::InvalidFinder(
+    //             "bidder cannot be finder".to_string(),
+    //         ));
+    //     }
+    // }
 
     // check bid finders_fee_bps is not over max
-    if let Some(fee) = finders_fee_bps {
-        if Decimal::percent(fee) > params.max_finders_fee_percent {
-            return Err(ContractError::InvalidFindersFeeBps(fee));
-        }
-    }
+    // if let Some(fee) = finders_fee_bps {
+    //     if Decimal::percent(fee) > params.max_finders_fee_percent {
+    //         return Err(ContractError::InvalidFindersFeeBps(fee));
+    //     }
+    // }
     let bid_price = must_pay(&info, NATIVE_DENOM)?;
     if bid_price < params.min_price {
         return Err(ContractError::PriceTooSmall(bid_price));
     }
     params.bid_expiry.is_valid(&env.block, expires)?;
-    if let Some(finders_fee_bps) = finders_fee_bps {
-        if Decimal::percent(finders_fee_bps) > params.max_finders_fee_percent {
-            return Err(ContractError::InvalidFindersFeeBps(finders_fee_bps));
-        }
-    }
+    // if let Some(finders_fee_bps) = finders_fee_bps {
+    //     if Decimal::percent(finders_fee_bps) > params.max_finders_fee_percent {
+    //         return Err(ContractError::InvalidFindersFeeBps(finders_fee_bps));
+    //     }
+    // }
 
     let bidder = info.sender;
     let mut res = Response::new();
-    let bid_key = bid_key(&collection, token_id, &bidder);
-    let ask_key = ask_key(&collection, token_id);
+    let bid_key = bid_key(&collection, &token_id, &bidder);
+    let ask_key = ask_key(&collection, &token_id);
 
     if let Some(existing_bid) = bids().may_load(deps.storage, bid_key.clone())? {
         bids().remove(deps.storage, bid_key)?;
@@ -474,20 +474,20 @@ pub fn execute_set_bid(
         if !ask.is_active {
             return Err(ContractError::AskNotActive {});
         }
-        if let Some(reserved_for) = ask.reserve_for {
-            if reserved_for != bidder {
-                return Err(ContractError::TokenReserved {});
-            }
-        }
+        // if let Some(reserved_for) = ask.reserve_for {
+        //     if reserved_for != bidder {
+        //         return Err(ContractError::TokenReserved {});
+        //     }
+        // }
     }
 
     let save_bid = |store| -> StdResult<_> {
         let bid = Bid::new(
             collection.clone(),
-            token_id,
+            token_id.clone(),
             bidder.clone(),
             bid_price,
-            finders_fee_bps,
+            // finders_fee_bps,
             expires,
         );
         store_bid(store, &bid)?;
@@ -506,7 +506,7 @@ pub fn execute_set_bid(
                     ask,
                     bid_price,
                     bidder.clone(),
-                    finder,
+                    // finder,
                     &mut res,
                 )?;
                 None
@@ -543,7 +543,7 @@ pub fn execute_remove_bid(
     nonpayable(&info)?;
     let bidder = info.sender;
 
-    let key = bid_key(&collection, token_id, &bidder);
+    let key = bid_key(&collection, &token_id, &bidder);
     let bid = bids().load(deps.storage, key.clone())?;
     bids().remove(deps.storage, key)?;
 
@@ -575,13 +575,13 @@ pub fn execute_accept_bid(
     collection: Addr,
     token_id: TokenId,
     bidder: Addr,
-    finder: Option<Addr>,
+    // finder: Option<Addr>,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
-    only_owner(deps.as_ref(), &info, &collection, token_id)?;
+    only_owner(deps.as_ref(), &info, &collection, token_id.clone())?;
 
-    let bid_key = bid_key(&collection, token_id, &bidder);
-    let ask_key = ask_key(&collection, token_id);
+    let bid_key = bid_key(&collection, &token_id, &bidder);
+    let ask_key = ask_key(&collection, &token_id);
 
     let bid = bids().load(deps.storage, bid_key.clone())?;
     if bid.is_expired(&env.block) {
@@ -602,14 +602,14 @@ pub fn execute_accept_bid(
         Ask {
             sale_type: SaleType::Auction,
             collection: collection.clone(),
-            token_id,
+            token_id: token_id.clone(),
             price: bid.price,
             expires_at: bid.expires_at,
             is_active: true,
             seller: info.sender,
             funds_recipient: None,
-            reserve_for: None,
-            finders_fee_bps: bid.finders_fee_bps,
+            // reserve_for: None,
+            // finders_fee_bps: bid.finders_fee_bps,
         }
     };
 
@@ -624,7 +624,7 @@ pub fn execute_accept_bid(
         ask,
         bid.price,
         bidder.clone(),
-        finder,
+        // finder,
         &mut res,
     )?;
 
@@ -643,7 +643,7 @@ pub fn execute_set_collection_bid(
     env: Env,
     info: MessageInfo,
     collection: Addr,
-    finders_fee_bps: Option<u64>,
+    // finders_fee_bps: Option<u64>,
     expires: Timestamp,
 ) -> Result<Response, ContractError> {
     let params = SUDO_PARAMS.load(deps.storage)?;
@@ -653,11 +653,11 @@ pub fn execute_set_collection_bid(
     }
     params.bid_expiry.is_valid(&env.block, expires)?;
     // check bid finders_fee_bps is not over max
-    if let Some(fee) = finders_fee_bps {
-        if Decimal::percent(fee) > params.max_finders_fee_percent {
-            return Err(ContractError::InvalidFindersFeeBps(fee));
-        }
-    }
+    // if let Some(fee) = finders_fee_bps {
+    //     if Decimal::percent(fee) > params.max_finders_fee_percent {
+    //         return Err(ContractError::InvalidFindersFeeBps(fee));
+    //     }
+    // }
 
     let bidder = info.sender;
     let mut res = Response::new();
@@ -678,7 +678,7 @@ pub fn execute_set_collection_bid(
         collection: collection.clone(),
         bidder: bidder.clone(),
         price,
-        finders_fee_bps,
+        // finders_fee_bps,
         expires_at: expires,
     };
     collection_bids().save(deps.storage, key, &collection_bid)?;
@@ -736,13 +736,13 @@ pub fn execute_accept_collection_bid(
     collection: Addr,
     token_id: TokenId,
     bidder: Addr,
-    finder: Option<Addr>,
+    // finder: Option<Addr>,
 ) -> Result<Response, ContractError> {
     nonpayable(&info)?;
-    only_owner(deps.as_ref(), &info, &collection, token_id)?;
+    only_owner(deps.as_ref(), &info, &collection, token_id.clone())?;
 
     let bid_key = collection_bid_key(&collection, &bidder);
-    let ask_key = ask_key(&collection, token_id);
+    let ask_key = ask_key(&collection, &token_id);
 
     let bid = collection_bids().load(deps.storage, bid_key.clone())?;
     if bid.is_expired(&env.block) {
@@ -764,14 +764,14 @@ pub fn execute_accept_collection_bid(
         Ask {
             sale_type: SaleType::Auction,
             collection: collection.clone(),
-            token_id,
+            token_id: token_id.clone(),
             price: bid.price,
             expires_at: bid.expires_at,
             is_active: true,
             seller: info.sender.clone(),
             funds_recipient: None,
-            reserve_for: None,
-            finders_fee_bps: bid.finders_fee_bps,
+            // reserve_for: None,
+            // finders_fee_bps: bid.finders_fee_bps,
         }
     };
 
@@ -783,7 +783,7 @@ pub fn execute_accept_collection_bid(
         ask,
         bid.price,
         bidder.clone(),
-        finder,
+        // finder,
         &mut res,
     )?;
 
@@ -809,7 +809,7 @@ pub fn execute_sync_ask(
     nonpayable(&info)?;
     only_operator(deps.storage, &info)?;
 
-    let key = ask_key(&collection, token_id);
+    let key = ask_key(&collection, &token_id);
 
     let mut ask = asks().load(deps.storage, key.clone())?;
 
@@ -851,7 +851,7 @@ pub fn execute_remove_stale_ask(
     nonpayable(&info)?;
     only_operator(deps.storage, &info)?;
 
-    let key = ask_key(&collection, token_id);
+    let key = ask_key(&collection, &token_id);
     let ask = asks().load(deps.storage, key.clone())?;
 
     let res =
@@ -890,7 +890,7 @@ pub fn execute_remove_stale_bid(
     nonpayable(&info)?;
     let operator = only_operator(deps.storage, &info)?;
 
-    let bid_key = bid_key(&collection, token_id, &bidder);
+    let bid_key = bid_key(&collection, &token_id, &bidder);
     let bid = bids().load(deps.storage, bid_key.clone())?;
 
     let params = SUDO_PARAMS.load(deps.storage)?;
@@ -985,7 +985,7 @@ fn finalize_sale(
     ask: Ask,
     price: Uint128,
     buyer: Addr,
-    finder: Option<Addr>,
+    // finder: Option<Addr>,
     res: &mut Response,
 ) -> StdResult<()> {
     payout(
@@ -995,8 +995,8 @@ fn finalize_sale(
         ask.funds_recipient
             .clone()
             .unwrap_or_else(|| ask.seller.clone()),
-        finder,
-        ask.finders_fee_bps,
+        // finder,
+        // ask.finders_fee_bps,
         res,
     )?;
 
@@ -1032,8 +1032,8 @@ fn payout(
     collection: Addr,
     payment: Uint128,
     payment_recipient: Addr,
-    finder: Option<Addr>,
-    finders_fee_bps: Option<u64>,
+    // finder: Option<Addr>,
+    // finders_fee_bps: Option<u64>,
     res: &mut Response,
 ) -> StdResult<()> {
     let params = SUDO_PARAMS.load(deps.storage)?;
@@ -1046,27 +1046,27 @@ fn payout(
         .querier
         .query_wasm_smart(collection.clone(), &Cw721QueryMsg::CollectionInfo {})?;
 
-    let finders_fee = match finder {
-        Some(finder) => {
-            let finders_fee = finders_fee_bps
-                .map(|fee| (payment * Decimal::percent(fee) / Uint128::from(100u128)).u128())
-                .unwrap_or(0);
-            if finders_fee > 0 {
-                res.messages.push(SubMsg::new(BankMsg::Send {
-                    to_address: finder.to_string(),
-                    amount: vec![coin(finders_fee, NATIVE_DENOM)],
-                }));
-            }
-            finders_fee
-        }
-        None => 0,
-    };
+    // let finders_fee = match finder {
+    //     Some(finder) => {
+    //         let finders_fee = finders_fee_bps
+    //             .map(|fee| (payment * Decimal::percent(fee) / Uint128::from(100u128)).u128())
+    //             .unwrap_or(0);
+    //         if finders_fee > 0 {
+    //             res.messages.push(SubMsg::new(BankMsg::Send {
+    //                 to_address: finder.to_string(),
+    //                 amount: vec![coin(finders_fee, NATIVE_DENOM)],
+    //             }));
+    //         }
+    //         finders_fee
+    //     }
+    //     None => 0,
+    // };
 
     match collection_info.royalty_info {
         // If token supports royalities, payout shares to royalty recipient
         Some(royalty) => {
             let amount = coin((payment * royalty.royalty_rate).u128(), NATIVE_DENOM);
-            if payment < (network_fee + Uint128::from(finders_fee) + amount.amount) {
+            if payment < (network_fee + amount.amount) {
                 return Err(StdError::generic_err("Fees exceed payment"));
             }
             res.messages.push(SubMsg::new(BankMsg::Send {
@@ -1083,21 +1083,21 @@ fn payout(
             let seller_share_msg = BankMsg::Send {
                 to_address: payment_recipient.to_string(),
                 amount: vec![coin(
-                    (payment * (Decimal::one() - royalty.royalty_rate) - network_fee).u128() - finders_fee,
+                    (payment * (Decimal::one() - royalty.royalty_rate) - network_fee).u128(),
                     NATIVE_DENOM.to_string(),
                 )],
             };
             res.messages.push(SubMsg::new(seller_share_msg));
         }
         None => {
-            if payment < (network_fee + Uint128::from(finders_fee)) {
+            if payment < (network_fee) {
                 return Err(StdError::generic_err("Fees exceed payment"));
             }
             // If token doesn't support royalties, pay seller in full
             let seller_share_msg = BankMsg::Send {
                 to_address: payment_recipient.to_string(),
                 amount: vec![coin(
-                    (payment - network_fee).u128() - finders_fee,
+                    (payment - network_fee).u128(),
                     NATIVE_DENOM.to_string(),
                 )],
             };
@@ -1123,13 +1123,13 @@ fn price_validate(store: &dyn Storage, price: &Coin) -> Result<(), ContractError
 fn store_bid(store: &mut dyn Storage, bid: &Bid) -> StdResult<()> {
     bids().save(
         store,
-        bid_key(&bid.collection, bid.token_id, &bid.bidder),
+        bid_key(&bid.collection, &bid.token_id, &bid.bidder),
         bid,
     )
 }
 
 fn store_ask(store: &mut dyn Storage, ask: &Ask) -> StdResult<()> {
-    asks().save(store, ask_key(&ask.collection, ask.token_id), ask)
+    asks().save(store, ask_key(&ask.collection, &ask.token_id), ask)
 }
 
 /// Checks to enfore only NFT owner can call
@@ -1137,7 +1137,7 @@ fn only_owner(
     deps: Deps,
     info: &MessageInfo,
     collection: &Addr,
-    token_id: u32,
+    token_id: String,
 ) -> Result<OwnerOfResponse, ContractError> {
     let res =
         Cw721Contract(collection.clone()).owner_of(&deps.querier, token_id.to_string(), false)?;
@@ -1229,7 +1229,7 @@ fn prepare_sale_hook(deps: Deps, ask: &Ask, buyer: Addr) -> StdResult<Vec<SubMsg
     let submsgs = SALE_HOOKS.prepare_hooks(deps.storage, |h| {
         let msg = SaleHookMsg {
             collection: ask.collection.to_string(),
-            token_id: ask.token_id,
+            token_id: ask.token_id.to_string(),
             price: coin(ask.price.clone().u128(), NATIVE_DENOM),
             seller: ask.seller.to_string(),
             buyer: buyer.to_string(),
@@ -1311,7 +1311,7 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, Contra
         pub ask_expiry: ExpiryRange,
         pub bid_expiry: ExpiryRange,
         pub operators: Vec<Addr>,
-        pub max_finders_fee_percent: Decimal,
+        // pub max_finders_fee_percent: Decimal,
         pub min_price: Uint128,
         pub stale_bid_duration: Duration,
         pub bid_removal_reward_percent: Decimal,
@@ -1327,7 +1327,7 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: Empty) -> Result<Response, Contra
         ask_expiry: current_params.ask_expiry,
         bid_expiry: current_params.bid_expiry,
         operators: current_params.operators,
-        max_finders_fee_percent: current_params.max_finders_fee_percent,
+        // max_finders_fee_percent: current_params.max_finders_fee_percent,
         min_price: current_params.min_price,
         stale_bid_duration: current_params.stale_bid_duration,
         bid_removal_reward_percent: current_params.bid_removal_reward_percent,

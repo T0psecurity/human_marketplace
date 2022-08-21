@@ -21,7 +21,7 @@ pub struct SudoParams {
     /// They listen to NFT transfer events, and update the active state of Asks
     pub operators: Vec<Addr>,
     /// Max value for the finders fee
-    pub max_finders_fee_percent: Decimal,
+    // pub max_finders_fee_percent: Decimal,
     /// Min value for a bid
     pub min_price: Uint128,
     /// Duration after expiry when a bid becomes stale
@@ -39,7 +39,7 @@ pub const BID_HOOKS: Hooks = Hooks::new("bid-hooks");
 pub const SALE_HOOKS: Hooks = Hooks::new("sale-hooks");
 pub const COLLECTION_BID_HOOKS: Hooks = Hooks::new("collection-bid-hooks");
 
-pub type TokenId = u32;
+pub type TokenId = String;
 
 pub trait Order {
     fn expires_at(&self) -> Timestamp;
@@ -65,8 +65,8 @@ pub struct Ask {
     pub seller: Addr,
     pub price: Uint128,
     pub funds_recipient: Option<Addr>,
-    pub reserve_for: Option<Addr>,
-    pub finders_fee_bps: Option<u64>,
+    // pub reserve_for: Option<Addr>,
+    // pub finders_fee_bps: Option<u64>,
     pub expires_at: Timestamp,
     pub is_active: bool,
 }
@@ -80,8 +80,8 @@ impl Order for Ask {
 /// Primary key for asks: (collection, token_id)
 pub type AskKey = (Addr, TokenId);
 /// Convenience ask key constructor
-pub fn ask_key(collection: &Addr, token_id: TokenId) -> AskKey {
-    (collection.clone(), token_id)
+pub fn ask_key(collection: &Addr, token_id: &TokenId) -> AskKey {
+    (collection.clone(), token_id.clone())
 }
 
 /// Defines indices for accessing Asks
@@ -118,7 +118,7 @@ pub struct Bid {
     pub token_id: TokenId,
     pub bidder: Addr,
     pub price: Uint128,
-    pub finders_fee_bps: Option<u64>,
+    // pub finders_fee_bps: Option<u64>,
     pub expires_at: Timestamp,
 }
 
@@ -128,7 +128,7 @@ impl Bid {
         token_id: TokenId,
         bidder: Addr,
         price: Uint128,
-        finders_fee_bps: Option<u64>,
+        // finders_fee_bps: Option<u64>,
         expires: Timestamp,
     ) -> Self {
         Bid {
@@ -136,7 +136,7 @@ impl Bid {
             token_id,
             bidder,
             price,
-            finders_fee_bps,
+            // finders_fee_bps,
             expires_at: expires,
         }
     }
@@ -151,8 +151,8 @@ impl Order for Bid {
 /// Primary key for bids: (collection, token_id, bidder)
 pub type BidKey = (Addr, TokenId, Addr);
 /// Convenience bid key constructor
-pub fn bid_key(collection: &Addr, token_id: TokenId, bidder: &Addr) -> BidKey {
-    (collection.clone(), token_id, bidder.clone())
+pub fn bid_key(collection: &Addr, token_id: &TokenId, bidder: &Addr) -> BidKey {
+    (collection.clone(), token_id.clone(), bidder.clone())
 }
 
 /// Defines incides for accessing bids
@@ -182,7 +182,7 @@ pub fn bids<'a>() -> IndexedMap<'a, BidKey, Bid, BidIndicies<'a>> {
     let indexes = BidIndicies {
         collection: MultiIndex::new(|d: &Bid| d.collection.clone(), "bids", "bids__collection"),
         collection_token_id: MultiIndex::new(
-            |d: &Bid| (d.collection.clone(), d.token_id),
+            |d: &Bid| (d.collection.clone(), d.token_id.clone()),
             "bids",
             "bids__collection_token_id",
         ),
@@ -207,7 +207,7 @@ pub struct CollectionBid {
     pub collection: Addr,
     pub bidder: Addr,
     pub price: Uint128,
-    pub finders_fee_bps: Option<u64>,
+    // pub finders_fee_bps: Option<u64>,
     pub expires_at: Timestamp,
 }
 
