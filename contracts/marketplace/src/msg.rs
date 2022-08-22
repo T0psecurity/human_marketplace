@@ -1,12 +1,11 @@
 use crate::{
     helpers::ExpiryRange,
-    state::{Ask, Bid, CollectionBid, SaleType, SudoParams, TokenId},
+    state::{Ask, Bid, CollectionBid, SudoParams, TokenId},
 };
-use cosmwasm_std::{to_binary, Addr, Binary, Coin, StdResult, Timestamp, Uint128};
-use cw_utils::Duration;
+use cosmwasm_std::{to_binary, Addr, Binary, Coin, StdResult, Uint128};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-
+use cw721::Cw721ReceiveMsg;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
     /// Fair Burn fee for winning bids
@@ -27,10 +26,6 @@ pub struct InstantiateMsg {
     // pub max_finders_fee_bps: u64,
     /// Min value for bids and asks
     pub min_price: Uint128,
-    /// Duration after expiry when a bid becomes stale (in seconds)
-    pub stale_bid_duration: Duration,
-    /// Stale bid removal reward
-    pub bid_removal_reward_bps: u64,
     /// Listing fee to reduce spam
     pub listing_fee: Uint128,
 }
@@ -38,17 +33,9 @@ pub struct InstantiateMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
+    ReceiveNft(Cw721ReceiveMsg),
     /// List an NFT on the marketplace by creating a new ask
-    SetAsk {
-        sale_type: SaleType,
-        collection: String,
-        token_id: TokenId,
-        price: Coin,
-        funds_recipient: Option<String>,
-        // reserve_for: Option<String>,
-        // finders_fee_bps: Option<u64>,
-        expires: Timestamp,
-    },
+    
     /// Remove an existing ask from the marketplace
     RemoveAsk {
         collection: String,
@@ -64,56 +51,19 @@ pub enum ExecuteMsg {
     SetBid {
         collection: String,
         token_id: TokenId,
-        expires: Timestamp,
-        sale_type: SaleType,
-        // finder: Option<String>,
-        // finders_fee_bps: Option<u64>,
     },
     /// Remove an existing bid from an ask
-    RemoveBid {
-        collection: String,
-        token_id: TokenId,
-    },
-    /// Accept a bid on an existing ask
+    // RemoveBid {
+    //     collection: String,
+    //     token_id: TokenId,
+    // },
+    // /// Accept a bid on an existing ask
     AcceptBid {
         collection: String,
         token_id: TokenId,
         bidder: String,
         // finder: Option<String>,
     },
-    /// Place a bid (limit order) across an entire collection
-    SetCollectionBid {
-        collection: String,
-        expires: Timestamp,
-        // finders_fee_bps: Option<u64>,
-    },
-    /// Remove a bid (limit order) across an entire collection
-    RemoveCollectionBid { collection: String },
-    /// Accept a collection bid
-    AcceptCollectionBid {
-        collection: String,
-        token_id: TokenId,
-        bidder: String,
-        // finder: Option<String>,
-    },
-    /// Privileged operation to change the active state of an ask when an NFT is transferred
-    SyncAsk {
-        collection: String,
-        token_id: TokenId,
-    },
-    /// Privileged operation to remove stale or invalid asks.
-    RemoveStaleAsk {
-        collection: String,
-        token_id: TokenId,
-    },
-    /// Privileged operation to remove stale bids
-    RemoveStaleBid {
-        collection: String,
-        token_id: TokenId,
-        bidder: String,
-    },
-    /// Privileged operation to remove stale collection bids
-    RemoveStaleCollectionBid { collection: String, bidder: String },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -122,14 +72,10 @@ pub enum SudoMsg {
     /// Update the contract parameters
     /// Can only be called by governance
     UpdateParams {
-        trading_fee_bps: Option<u64>,
         ask_expiry: Option<ExpiryRange>,
         bid_expiry: Option<ExpiryRange>,
         operators: Option<Vec<String>>,
-        // max_finders_fee_bps: Option<u64>,
         min_price: Option<Uint128>,
-        stale_bid_duration: Option<u64>,
-        bid_removal_reward_bps: Option<u64>,
         listing_fee: Option<Uint128>,
     },
     /// Add a new operator
@@ -223,6 +169,9 @@ impl CollectionBidOffset {
 pub enum QueryMsg {
     /// List of collections that have asks on them
     /// Return type: `CollectionsResponse`
+    Test {
+
+    },
     Collections {
         start_after: Option<Collection>,
         limit: Option<u32>,
@@ -286,13 +235,6 @@ pub enum QueryMsg {
     /// Get all bids by a bidder
     /// Return type: `BidsResponse`
     BidsByBidder {
-        bidder: Bidder,
-        start_after: Option<CollectionOffset>,
-        limit: Option<u32>,
-    },
-    /// Get all bids by a bidder, sorted by expiration
-    /// Return type: `BidsResponse`
-    BidsByBidderSortedByExpiration {
         bidder: Bidder,
         start_after: Option<CollectionOffset>,
         limit: Option<u32>,

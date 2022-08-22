@@ -1,6 +1,5 @@
-use cosmwasm_std::{Addr, BlockInfo, Decimal, Timestamp, Uint128};
+use cosmwasm_std::{Addr, BlockInfo, Timestamp, Uint128};
 use cw_storage_plus::{Index, IndexList, IndexedMap, Item, MultiIndex};
-use cw_utils::Duration;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use cw_controllers::Hooks;
@@ -10,7 +9,7 @@ use crate::helpers::ExpiryRange;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct SudoParams {
     /// Fair Burn fee for winning bids
-    pub trading_fee_percent: Decimal,
+    // pub trading_fee_percent: Decimal,
     /// Valid time range for Asks
     /// (min, max) in seconds
     pub ask_expiry: ExpiryRange,
@@ -24,10 +23,6 @@ pub struct SudoParams {
     // pub max_finders_fee_percent: Decimal,
     /// Min value for a bid
     pub min_price: Uint128,
-    /// Duration after expiry when a bid becomes stale
-    pub stale_bid_duration: Duration,
-    /// Stale bid removal reward
-    pub bid_removal_reward_percent: Decimal,
     /// Listing fee to reduce spam
     pub listing_fee: Uint128,
 }
@@ -65,10 +60,10 @@ pub struct Ask {
     pub seller: Addr,
     pub price: Uint128,
     pub funds_recipient: Option<Addr>,
-    // pub reserve_for: Option<Addr>,
-    // pub finders_fee_bps: Option<u64>,
     pub expires_at: Timestamp,
     pub is_active: bool,
+    pub max_bid: Option<Uint128>,
+    pub max_bidder: Option<Addr>,
 }
 
 impl Order for Ask {
@@ -118,8 +113,6 @@ pub struct Bid {
     pub token_id: TokenId,
     pub bidder: Addr,
     pub price: Uint128,
-    // pub finders_fee_bps: Option<u64>,
-    pub expires_at: Timestamp,
 }
 
 impl Bid {
@@ -128,23 +121,13 @@ impl Bid {
         token_id: TokenId,
         bidder: Addr,
         price: Uint128,
-        // finders_fee_bps: Option<u64>,
-        expires: Timestamp,
     ) -> Self {
         Bid {
             collection,
             token_id,
             bidder,
             price,
-            // finders_fee_bps,
-            expires_at: expires,
         }
-    }
-}
-
-impl Order for Bid {
-    fn expires_at(&self) -> Timestamp {
-        self.expires_at
     }
 }
 
@@ -162,7 +145,6 @@ pub struct BidIndicies<'a> {
     pub collection_price: MultiIndex<'a, (Addr, u128), Bid, BidKey>,
     pub bidder: MultiIndex<'a, Addr, Bid, BidKey>,
     // Cannot include `Timestamp` in index, converted `Timestamp` to `seconds` and stored as `u64`
-    pub bidder_expires_at: MultiIndex<'a, (Addr, u64), Bid, BidKey>,
 }
 
 impl<'a> IndexList<Bid> for BidIndicies<'a> {
@@ -172,7 +154,6 @@ impl<'a> IndexList<Bid> for BidIndicies<'a> {
             &self.collection_token_id,
             &self.collection_price,
             &self.bidder,
-            &self.bidder_expires_at,
         ];
         Box::new(v.into_iter())
     }
@@ -192,11 +173,6 @@ pub fn bids<'a>() -> IndexedMap<'a, BidKey, Bid, BidIndicies<'a>> {
             "bids__collection_price",
         ),
         bidder: MultiIndex::new(|d: &Bid| d.bidder.clone(), "bids", "bids__bidder"),
-        bidder_expires_at: MultiIndex::new(
-            |d: &Bid| (d.bidder.clone(), d.expires_at.seconds()),
-            "bids",
-            "bids__bidder_expires_at",
-        ),
     };
     IndexedMap::new("bids", indexes)
 }

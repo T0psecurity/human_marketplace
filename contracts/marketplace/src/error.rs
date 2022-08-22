@@ -81,4 +81,16 @@ pub enum ContractError {
 
     #[error("InvalidContractVersion")]
     InvalidContractVersion {},
+
+    #[error("Insufficient funds sent")]
+    InsufficientFundsSend {},   
+
+    #[error("Wrong ask info")]
+    WrongAskInfo {},
+
+    #[error("Auction not ended")]
+    AuctionNotEnded {},
+
+    #[error("ids mismatch")]
+    IdMismatch {}
 }

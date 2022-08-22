@@ -47,6 +47,6 @@ stale_bid_duration: Duration
 /**
  * Fair Burn fee for winning bids
  */
-trading_fee_percent: Decimal
+// trading_fee_percent: Decimal
 [k: string]: unknown
 }
