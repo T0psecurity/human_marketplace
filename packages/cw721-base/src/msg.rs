@@ -1,20 +1,52 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{state::CollectionInfo, ContractError};
-use cosmwasm_std::{Binary, Decimal};
+use crate::{ContractError};
+use cosmwasm_std::{Binary, Decimal, Uint128, Coin};
 use cw721::Expiration;
 
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct CollectionInfoResponse {
-    pub creator: String,
-    pub description: String,
-    pub image: String,
-    pub external_link: Option<String>,
-    pub royalty_info: Option<RoyaltyResponse>,
+    pub collection_info : CollectionInfo,
+    pub mint_info : Option<MintInfo>,
+    pub minter : String,
+    pub royalty_info : Option<Royalty>,
 }
 
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+pub struct MintInfo {
+    pub base_token_uri: String,
+    pub base_image_uri:String,
+    pub total_supply: Uint128,
+    pub start_mint_time: u64,
+    pub per_address_limit: Uint128,
+    pub public_price: Coin,
+    pub private_price:Coin,
+    pub mint_flag:bool,
+    pub is_public_mint:bool,
+    pub nft_base_name:String
+}
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+pub struct CollectionInfo {
+    pub title: Option<String>,
+    pub creator:Option<String>,
+    pub image_url:Option<String>,
+    pub background_url:Option<String>,
+    pub logo_url:Option<String>,
+    pub collection_id : Option<String>,
+    pub metadata_url:Option<String>,
+    pub social_links:Option<Vec<SocialLinkType>>,
+    pub description:Option<String>,
+    pub is_launch : Option<bool>,
+}
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+pub struct SocialLinkType {
+    pub tool: String,
+    pub link: String
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
@@ -29,7 +61,7 @@ pub struct InstantiateMsg {
     pub minter: String,
 
     pub admin: String,
-    pub collection_info: CollectionInfo<RoyaltyResponse>,
+    pub collection_info: CollectionInfo,
 }
 
 /// This is like Cw721ExecuteMsg but we add a Mint command for an owner
@@ -165,7 +197,7 @@ pub enum QueryMsg {
     Minter {},
     Admin {},
 
-    CollectionInfo {},
+    GetCollectionState  {},
 }
 
 /// Shows who can mint these tokens
@@ -180,12 +212,13 @@ pub struct AdminResponse {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct RoyaltyResponse {
+pub struct Royalty {
     pub address: String,
     pub royalty_rate: Decimal,
 }
 
-impl RoyaltyResponse {
+
+impl Royalty {
     pub fn royalty_rate_validate(&self) -> Result<Decimal, ContractError> {
         if self.royalty_rate > Decimal::one() {
             return Err(ContractError::InvalidRoyalities {});

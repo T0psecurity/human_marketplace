@@ -61,7 +61,6 @@ pub struct Ask {
     pub price: Uint128,
     pub funds_recipient: Option<Addr>,
     pub expires_at: Timestamp,
-    pub is_active: bool,
     pub max_bid: Option<Uint128>,
     pub max_bidder: Option<Addr>,
 }

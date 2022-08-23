@@ -92,5 +92,8 @@ pub enum ContractError {
     AuctionNotEnded {},
 
     #[error("ids mismatch")]
-    IdMismatch {}
+    IdMismatch {},
+
+    #[error("auction cannot remove")]
+    AuctionNotRemove {}
 }
