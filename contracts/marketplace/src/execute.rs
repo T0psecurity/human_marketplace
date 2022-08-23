@@ -20,7 +20,7 @@ use cw2::set_contract_version;
 use cw721_base::ExecuteMsg as Cw721ExecuteMsg;
 use cw721_base::QueryMsg as Cw721QueryMsg;
 use cw721_base::CollectionInfoResponse;
-use cw721::Cw721ReceiveMsg;
+use cw721::{Cw721ReceiveMsg, NftInfoResponse};
 use cw_storage_plus::Item;
 use cw_utils::{may_pay, must_pay, nonpayable, Duration};
 use schemars::JsonSchema;
@@ -176,10 +176,16 @@ pub fn execute_set_ask(
     let seller = info.sender;
     let now = env.block.time;
 
+    let nft_info: NftInfoResponse<Metadata> = deps
+        .querier
+        .query_wasm_smart(collection.clone(), &Cw721QueryMsg::NftInfo { token_id: token_id.clone() })?;
+
+    
     let ask = Ask {
         sale_type,
         collection: collection.clone(),
         token_id: token_id.clone(),
+        img_url: nft_info.extension.external_link.unwrap(),
         seller: deps.api.addr_validate(rcv_msg.sender.as_str())?,
         price: price.amount,
         funds_recipient,

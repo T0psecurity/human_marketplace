@@ -57,6 +57,7 @@ pub struct Ask {
     pub sale_type: SaleType,
     pub collection: Addr,
     pub token_id: TokenId,
+    pub img_url: String,
     pub seller: Addr,
     pub price: Uint128,
     pub funds_recipient: Option<Addr>,
