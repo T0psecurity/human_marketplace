@@ -215,42 +215,42 @@ pub enum QueryMsg {
         start_after: Option<CollectionOffset>,
         limit: Option<u32>,
     },
-    // /// Get data for a specific bid
-    // /// Return type: `BidResponse`
-    // Bid {
-    //     collection: Collection,
-    //     token_id: TokenId,
-    //     bidder: Bidder,
-    // },
-    // /// Get all bids by a bidder
-    // /// Return type: `BidsResponse`
-    // BidsByBidder {
-    //     bidder: Bidder,
-    //     start_after: Option<CollectionOffset>,
-    //     limit: Option<u32>,
-    // },
-    // /// Get all bids for a specific NFT
-    // /// Return type: `BidsResponse`
-    // Bids {
-    //     collection: Collection,
-    //     token_id: TokenId,
-    //     start_after: Option<Bidder>,
-    //     limit: Option<u32>,
-    // },
-    // /// Get all bids for a collection, sorted by price
-    // /// Return type: `BidsResponse`
-    // BidsSortedByPrice {
-    //     collection: Collection,
-    //     start_after: Option<BidOffset>,
-    //     limit: Option<u32>,
-    // },
-    // /// Get all bids for a collection, sorted by price in reverse
-    // /// Return type: `BidsResponse`
-    // ReverseBidsSortedByPrice {
-    //     collection: Collection,
-    //     start_before: Option<BidOffset>,
-    //     limit: Option<u32>,
-    // },
+    /// Get data for a specific bid
+    /// Return type: `BidResponse`
+    Bid {
+        collection: Collection,
+        token_id: TokenId,
+        bidder: Bidder,
+    },
+    /// Get all bids by a bidder
+    /// Return type: `BidsResponse`
+    BidsByBidder {
+        bidder: Bidder,
+        start_after: Option<CollectionOffset>,
+        limit: Option<u32>,
+    },
+    /// Get all bids for a specific NFT
+    /// Return type: `BidsResponse`
+    Bids {
+        collection: Collection,
+        token_id: TokenId,
+        start_after: Option<Bidder>,
+        limit: Option<u32>,
+    },
+    /// Get all bids for a collection, sorted by price
+    /// Return type: `BidsResponse`
+    BidsSortedByPrice {
+        collection: Collection,
+        start_after: Option<BidOffset>,
+        limit: Option<u32>,
+    },
+    /// Get all bids for a collection, sorted by price in reverse
+    /// Return type: `BidsResponse`
+    ReverseBidsSortedByPrice {
+        collection: Collection,
+        start_before: Option<BidOffset>,
+        limit: Option<u32>,
+    },
     /// Show all registered ask hooks
     /// Return type: `HooksResponse`
     AskHooks {},

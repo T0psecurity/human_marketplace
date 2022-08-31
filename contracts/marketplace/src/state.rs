@@ -113,6 +113,7 @@ pub struct Bid {
     pub token_id: TokenId,
     pub bidder: Addr,
     pub price: Uint128,
+    pub active: bool,
 }
 
 impl Bid {
@@ -121,12 +122,14 @@ impl Bid {
         token_id: TokenId,
         bidder: Addr,
         price: Uint128,
+        active: bool,
     ) -> Self {
         Bid {
             collection,
             token_id,
             bidder,
             price,
+            active
         }
     }
 }

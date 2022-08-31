@@ -185,7 +185,7 @@ pub fn execute_set_ask(
         sale_type,
         collection: collection.clone(),
         token_id: token_id.clone(),
-        img_url: nft_info.extension.external_link.unwrap(),
+        img_url: nft_info.extension.image_url,
         seller: deps.api.addr_validate(rcv_msg.sender.as_str())?,
         price: price.amount,
         funds_recipient,
@@ -310,6 +310,12 @@ pub fn execute_set_bid(
     let bidder = info.sender.clone();
     let mut res = Response::new();
     let ask_key = ask_key(&collection, &token_id);
+    let current_bid_key = bid_key(&collection, &token_id, &bidder);
+
+    let existing_bid = bids().may_load(deps.storage, current_bid_key.clone())?;
+    if existing_bid.is_some() {
+        bids().remove(deps.storage, current_bid_key)?;
+    }
 
     let existing_ask = asks().may_load(deps.storage, ask_key.clone())?;
 
@@ -336,6 +342,7 @@ pub fn execute_set_bid(
             token_id.clone(),
             bidder.clone(),
             bid_price,
+            true,
         );
         store_bid(store, &bid)?;
         Ok(Some(bid))
@@ -375,8 +382,16 @@ pub fn execute_set_bid(
 
             if max_bidder != env.contract.address {
                 res = res.add_message(refund_msg);
-            }
+                
+                let prev_bid_key = bid_key(&collection, &token_id, &max_bidder);
+                let prev_bid = bids().may_load(deps.storage, prev_bid_key.clone())?;
 
+                if let Some(mut prev_bid) = prev_bid {
+                    prev_bid.active = false;
+                    bids().save(deps.storage, prev_bid_key, &prev_bid)?;
+                }
+            }
+                
             ask.max_bid = Some(bid_price);
             ask.max_bidder = Some(info.sender);
             asks().save(deps.storage, ask_key, &ask)?;
@@ -446,7 +461,6 @@ pub fn execute_accept_bid(
     nonpayable(&info)?;
 
     let ask_key = ask_key(&collection, &token_id);
-
     let existing_ask = asks().may_load(deps.storage, ask_key.clone())?.unwrap();
 
     only_owner_nft(&info, existing_ask.clone().seller)?;

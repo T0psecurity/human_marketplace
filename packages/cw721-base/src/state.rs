@@ -147,16 +147,7 @@ pub fn token_owner_idx<T>(d: &TokenInfo<T>) -> Addr {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Metadata {
-    // Identifies the asset to which this NFT represents
-    pub name: Option<String>,
-    // Describes the asset to which this NFT represents (may be empty)
-    pub description: Option<String>,
-    // An external URI
-    pub external_link: Option<String>,
-    // royalties
-    pub royalties: Option<Vec<Royalty>>,
-    // initial ask price
-    pub init_price: Option<Uint128>,
+    pub image_url: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
