@@ -14,7 +14,7 @@ use cw721_base::Metadata;
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     coin, to_binary, Addr, BankMsg, Coin, Decimal, Deps, DepsMut, Empty, Env, Event, MessageInfo,
-    Reply, StdError, StdResult, Storage, Timestamp, Uint128, WasmMsg, Response, SubMsg, from_binary
+    Reply, StdError, StdResult, Storage, Uint128, WasmMsg, Response, SubMsg, from_binary
 };
 use cw2::set_contract_version;
 use cw721_base::ExecuteMsg as Cw721ExecuteMsg;
@@ -202,7 +202,8 @@ pub fn execute_set_ask(
         .add_attribute("token_id", token_id.to_string())
         .add_attribute("seller", seller)
         .add_attribute("price", price.to_string())
-        .add_attribute("expires", expires.to_string());
+        .add_attribute("expires", expires.to_string())
+        .add_attribute("time", env.block.time.to_string());
 
     let res = Response::new();
 
@@ -284,7 +285,8 @@ pub fn execute_update_ask_price(
     let event = Event::new("update-ask")
         .add_attribute("collection", collection.to_string())
         .add_attribute("token_id", token_id.to_string())
-        .add_attribute("price", price.to_string());
+        .add_attribute("price", price.to_string())
+        .add_attribute("time", env.block.time.to_string());
 
     Ok(Response::new().add_event(event).add_submessages(hook))
 }
@@ -343,6 +345,7 @@ pub fn execute_set_bid(
             bidder.clone(),
             bid_price,
             true,
+            env.block.time,
         );
         store_bid(store, &bid)?;
         Ok(Some(bid))
@@ -410,7 +413,8 @@ pub fn execute_set_bid(
         .add_attribute("collection", collection.to_string())
         .add_attribute("token_id", token_id.to_string())
         .add_attribute("bidder", bidder)
-        .add_attribute("bid_price", bid_price.to_string());
+        .add_attribute("bid_price", bid_price.to_string())
+        .add_attribute("time", env.block.time.to_string());
 
     Ok(res.add_submessages(hook).add_event(event))
 }
@@ -504,7 +508,8 @@ pub fn execute_accept_bid(
     let event = Event::new("accept-bid")
         .add_attribute("collection", collection.to_string())
         .add_attribute("token_id", token_id.to_string())
-        .add_attribute("buyer", max_bidder);
+        .add_attribute("buyer", max_bidder)
+        .add_attribute("time", env.block.time.to_string());
 
     Ok(res.add_event(event))
 }
@@ -547,6 +552,7 @@ fn finalize_sale(
         .add_attribute("seller", ask.seller.to_string())
         .add_attribute("buyer", buyer.to_string())
         .add_attribute("price", price.to_string());
+
     res.events.push(event);
 
     Ok(())
@@ -653,20 +659,6 @@ fn only_owner_nft(
     }
 
     Ok(Response::default())
-}
-
-/// Checks to enforce only privileged operators
-fn only_operator(store: &dyn Storage, info: &MessageInfo) -> Result<Addr, ContractError> {
-    let params = SUDO_PARAMS.load(store)?;
-    if !params
-        .operators
-        .iter()
-        .any(|a| a.as_ref() == info.sender.as_ref())
-    {
-        return Err(ContractError::UnauthorizedOperator {});
-    }
-
-    Ok(info.sender.clone())
 }
 
 enum HookReply {

@@ -114,6 +114,7 @@ pub struct Bid {
     pub bidder: Addr,
     pub price: Uint128,
     pub active: bool,
+    pub time: Timestamp,
 }
 
 impl Bid {
@@ -123,13 +124,15 @@ impl Bid {
         bidder: Addr,
         price: Uint128,
         active: bool,
+        time: Timestamp,
     ) -> Self {
         Bid {
             collection,
             token_id,
             bidder,
             price,
-            active
+            active,
+            time
         }
     }
 }

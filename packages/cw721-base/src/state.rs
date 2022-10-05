@@ -2,7 +2,7 @@ use schemars::JsonSchema;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{Addr, BlockInfo, Decimal,  Uint128};
+use cosmwasm_std::{Addr, BlockInfo, Decimal};
 
 use cw721::{Expiration};
 use cw_storage_plus::{Index, IndexList, Item, MultiIndex};
